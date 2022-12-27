@@ -1,42 +1,69 @@
- import React, {useState} from "react";
+ import React, {Component} from "react";
  import {Grid} from "semantic-ui-react";
  import EventList from "./EventList";
  import EventForm from "../eventForm/EventForm";
  import {sampleData} from "../../../app/api/sampleData";
 
- export default function EventDashboard({formOpen, setFormOpen, selectEvent, selectedEvent}) {
-     const [events,setEvents] = useState(sampleData);
+ export default class EventDashboard extends Component
+ {
+     constructor(props) {
+         super(props);
 
-     function handleCreateEvent(event) {
-         setEvents([...events, event]);
+         this.state = {
+             events: sampleData
+         }
+        this.handleCreateEvent = this.handleCreateEvent.bind(this);
+         this.handleUpdateEvent = this.handleUpdateEvent.bind(this);
+
+     }
+     handleCreateEvent(event) {
+         this.setState(({events}) => ({
+             events: [...events,event]
+         }));
+         this.props.setFormOpen(false);
      }
 
-     function handleUpdateEvent(updateEvent) {
-         setEvents(events.map(evt => evt.id === updateEvent.id ? updateEvent : evt));
-         selectEvent(null);
+      handleUpdateEvent(updateEvent) {
+        this.setState(({events}) =>({
+            events : events.map(evt => evt.id === updateEvent.id ? updateEvent : evt)
+        }));
+        this.props.selectEvent(null);
+        this.props.setFormOpen(false);
+      }
+      handleDeleteEvent = (eventId) => {
+        this.setState(({events}) => ({
+            events: events.filter(evt => evt.id != eventId)
+        }))
+    }
+    render()
+     {
+         const {
+             selectEvent,
+             setFormOpen,
+             setEvents,
+             selectedEvent,
+             formOpen
+         } = this.props;
+
+         return(
+             <Grid>
+                 <Grid.Column width={10}>
+                     <EventList
+                         events={this.state.events}
+                         selectEvent={selectEvent}
+                         deletedEvent={this.handleDeleteEvent}/>
+                 </Grid.Column>
+                 <Grid.Column width={6}>
+                     {formOpen && <EventForm
+                         setFormOpen={setFormOpen}
+                         setEvents={setEvents}
+                         createEvent={this.handleCreateEvent}
+                         selectedEvent={selectedEvent}
+                         updateEvent={this.handleUpdateEvent}
+                         key={selectedEvent ? selectedEvent.id : null}
+                     />}
+                 </Grid.Column>
+             </Grid>
+         );
      }
-
-     function handleDeleteEvent(eventId) {
-         setEvents(events.filter(x => x.id !== eventId));
-     }
-
-
-    return(
-        <Grid>
-            <Grid.Column width={10}>
-               <EventList events={events} selectEvent={selectEvent} deletedEvent={handleDeleteEvent}/>
-            </Grid.Column>
-            <Grid.Column width={6}>
-                {formOpen && <EventForm
-                                    setFormOpen={setFormOpen}
-                                    setEvents={setEvents}
-                                    createEvent = {handleCreateEvent}
-                                    selectedEvent={selectedEvent}
-                                    updateEvent={handleUpdateEvent}
-                                    key = {selectedEvent ? selectedEvent.id : null}
-
-                />}
-            </Grid.Column>
-        </Grid>
-    )
 }
